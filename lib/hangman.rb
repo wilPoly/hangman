@@ -22,6 +22,22 @@ class Game
     word
   end
 
+  def player_input
+    input = ''
+    while input == ''
+      input = gets.downcase.chomp[0]
+      case input
+      when ('a'..'z')
+        guess(input)
+      when '1'
+        save_game # TODO
+        redo
+      else
+        redo
+      end
+    end
+  end
+
   def write_guess(secret, hidden, guess)
     secret.split('').each_with_index do |letter, i|
       hidden[i] = guess if letter == guess
@@ -29,31 +45,41 @@ class Game
     hidden
   end
 
-  def guess_word
-    puts 'Guess a letter from the secret word.'
-    guess = gets.chomp[0].downcase
-    if @secret_word.include?(guess)
-      puts "'#{guess}' is in the word!"
-      @hidden_word = write_guess(@secret_word, @hidden_word, guess)
+  def guess(letter)
+    if @secret_word.include?(letter)
+      puts "'#{letter}' is in the word!"
+      @hidden_word = write_guess(@secret_word, @hidden_word, letter)
     else
-      puts "'#{guess} is not in the word!"
-      @misses << guess unless @misses.include?(guess)
+      puts "'#{letter} is not in the word!"
+      @misses << letter unless @misses.include?(letter)
       @turns_left -= 1
     end
   end
 
-  def win?(hidden, secret)
-    puts 'You win!' if hidden == secret
+  def end_game(condition)
+    response = ''
+    until %w[Y N].include?(response)
+      puts "You #{condition}! Would you like to play another game? Y/N"
+      response = gets.upcase.chomp
+      case response
+      when 'Y'
+        Game.new
+      when 'N'
+        exit(0)
+      end
+    end
   end
 
   def turn
     until @turns_left.zero?
       puts @secret_word # comment when done testing
-      puts "#{@hidden_word} - Misses: #{@misses}"
-      puts "#{@turns_left} turns left\n\n"
-      guess_word
-      puts "You win! #{@secret_word} was the right word!" if @secret_word == @hidden_word
+      puts "\n#{@hidden_word} - Misses: #{@misses}"
+      puts "#{@turns_left} turns left"
+      puts 'Guess a letter from the secret word. Enter "1" to save the game.'
+      player_input
+      end_game('win') if @secret_word == @hidden_word
     end
+    end_game('lose')
   end
 end
 
