@@ -8,6 +8,8 @@ class Game
   def initialize
     @secret_word = define_secret_word(WORDLIST)
     @hidden_word = @secret_word.gsub(/./, '_')
+    @turns_left = TURNS
+    @misses = []
     turn
   end
 
@@ -35,7 +37,8 @@ class Game
       @hidden_word = write_guess(@secret_word, @hidden_word, guess)
     else
       puts "'#{guess} is not in the word!"
-      misses << guess unless misses.include?(guess)
+      @misses << guess unless @misses.include?(guess)
+      @turns_left -= 1
     end
   end
 
@@ -44,13 +47,12 @@ class Game
   end
 
   def turn
-    turns_left = TURNS
-    until turns_left.zero?
-      puts @secret_word
-      puts @hidden_word
+    until @turns_left.zero?
+      puts @secret_word # comment when done testing
+      puts "#{@hidden_word} - Misses: #{@misses}"
+      puts "#{@turns_left} turns left\n\n"
       guess_word
-      puts 'You win!' if @secret_word == @hidden_word
-      turns_left -= 1
+      puts "You win! #{@secret_word} was the right word!" if @secret_word == @hidden_word
     end
   end
 end
