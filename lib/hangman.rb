@@ -1,9 +1,39 @@
 # frozen_string_literal: true
 
+require 'yaml'
+
+# Saving and loading games
+module FileSystem
+  def save_game
+    Dir.mkdir('./saves') unless File.exist? './saves'
+    File.open('./saves/save_game.yaml', 'w') { |file| file.write save_to_yaml }
+  end
+
+  def save_to_yaml
+    YAML.dump(
+      'secret_word' => @secret_word,
+      'hidden_word' => @hidden_word,
+      'turns_left' => @turns_left,
+      'misses' => @misses
+    )
+  end
+
+  def load_game
+    file = YAML.safe_load(File.open('./saves/save_game.yaml', 'r'))
+    @secret_word = file['secret_word']
+    @hidden_word = file['hidden_word']
+    @turns_left = file['turns_left']
+    @misses = file['misses']
+  end
+end
+
 # Game engine
 class Game
+  include FileSystem
   WORDLIST = './google-10000-english-no-swears.txt'
   TURNS = 8
+
+  attr_accessor :secret_word, :hidden_word, :turns_left, :misses
 
   def initialize
     @secret_word = define_secret_word(WORDLIST)
@@ -17,6 +47,7 @@ class Game
     word = ''
     File.open(word_list, 'r') do |file|
       lines = file.readlines
+      # get random word with rand(max=lines.length)
       word = lines[rand(lines.length)].chomp until word.chomp.length.between?(5, 12)
     end
     word
@@ -27,11 +58,12 @@ class Game
     while input == ''
       input = gets.downcase.chomp[0]
       case input
-      when ('a'..'z')
-        guess(input)
+      when ('a'..'z') then guess(input)
       when '1'
         save_game # TODO
-        redo
+        exit(0)
+      when '2'
+        load_game
       else
         redo
       end
@@ -75,7 +107,7 @@ class Game
       puts @secret_word # comment when done testing
       puts "\n#{@hidden_word} - Misses: #{@misses}"
       puts "#{@turns_left} turns left"
-      puts 'Guess a letter from the secret word. Enter "1" to save the game.'
+      puts 'Guess a letter from the secret word. (1) save and exit | (2) load the last saved game'
       player_input
       end_game('win') if @secret_word == @hidden_word
     end
@@ -83,5 +115,4 @@ class Game
   end
 end
 
-game = Game.new
-# p game.define_secret_word('./google-10000-english-no-swears.txt')
+Game.new
